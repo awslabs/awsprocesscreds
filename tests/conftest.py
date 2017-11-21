@@ -1,26 +1,31 @@
-import base64
 from datetime import datetime, timedelta
 
 import mock
 import pytest
 from dateutil.tz import tzlocal
 
+from tests import create_assertion
+
 
 @pytest.fixture
-def client_creator():
+def mock_botocore_client():
+    return mock.Mock()
+
+
+@pytest.fixture
+def client_creator(mock_botocore_client):
     # Create a mock sts client that returns a specific response
     # for assume_role_with_saml.
-    client = mock.Mock()
     expiration = datetime.now(tzlocal()) + timedelta(days=1)
-    client.assume_role_with_saml.return_value = {
+    mock_botocore_client.assume_role_with_saml.return_value = {
         'Credentials': {
             'AccessKeyId': 'foo',
             'SecretAccessKey': 'bar',
             'SessionToken': 'baz',
-            'Expiration': expiration.isoformat()
+            'Expiration': expiration
         },
     }
-    return mock.Mock(return_value=client)
+    return mock.Mock(return_value=mock_botocore_client)
 
 
 @pytest.fixture
@@ -38,24 +43,6 @@ def login_form():
         '</form>'
         '</html>'
     )
-
-
-def create_assertion(roles):
-    saml_assertion = (
-        '<?xml version="1.0" encoding="UTF-8"?>'
-        '<saml2p:Response xmlns:saml2p="urn:oasis:names:tc:SAML:2.0:protocol">'
-        '<saml2:Assertion xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion">'
-        '<saml2:Attribute Name="https://aws.amazon.com/SAML/Attributes/Role">'
-    )
-    for role in roles:
-        partial = '<saml2:AttributeValue>%s</saml2:AttributeValue>' % role
-        saml_assertion += partial
-    saml_assertion += (
-        '</saml2:Attribute>'
-        '</saml2:Assertion>'
-        '</saml2p:Response>'
-    )
-    return base64.b64encode(saml_assertion.encode('ascii'))
 
 
 @pytest.fixture(params=[

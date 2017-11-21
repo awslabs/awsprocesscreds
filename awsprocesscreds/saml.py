@@ -3,8 +3,7 @@ import getpass
 import logging
 import xml.etree.cElementTree as ET
 from html import escape
-from hashlib import sha256
-import os
+from hashlib import sha1
 
 import six
 import requests
@@ -300,6 +299,7 @@ class SAMLCredentialFetcher(CachedCredentialFetcher):
                  role_selector=_role_selector,
                  password_prompter=getpass.getpass, cache=None,
                  expiry_window_seconds=60 * 15):
+        """Credential fetcher for SAML."""
         self._client_creator = client_creator
         self._role_selector = role_selector
         self._config = saml_config
@@ -324,16 +324,13 @@ class SAMLCredentialFetcher(CachedCredentialFetcher):
         return self._stored_cache_key
 
     def _create_cache_key(self):
-        kwargs = self._get_assume_role_kwargs().copy()
-        if not isinstance(kwargs['SAMLAssertion'], six.text_type):
-            kwargs['SAMLAssertion'] = kwargs['SAMLAssertion'].decode('utf-8')
-
-        role_arn = kwargs['RoleArn']
-        role_arn = role_arn.replace(':', '_').replace(os.path.sep, '_')
-
-        args = json.dumps(kwargs, sort_keys=True)
-        argument_hash = sha256(args.encode('utf-8')).hexdigest()
-        return '%s--%s' % (role_arn, argument_hash)
+        cache_key_kwargs = {
+            'provider_name': self._provider_name,
+            'saml_config': self._config.copy()
+        }
+        cache_key_kwargs = json.dumps(cache_key_kwargs, sort_keys=True)
+        argument_hash = sha1(cache_key_kwargs.encode('utf-8')).hexdigest()
+        return self._make_file_safe(argument_hash)
 
     def fetch_credentials(self):
         creds = super(SAMLCredentialFetcher, self).fetch_credentials()
@@ -348,7 +345,10 @@ class SAMLCredentialFetcher(CachedCredentialFetcher):
         logger.debug("Retrieving credentials via AssumeRoleWithSaml.")
         kwargs = self._get_assume_role_kwargs()
         client = self._create_client()
-        return client.assume_role_with_saml(**kwargs)
+        response = client.assume_role_with_saml(**kwargs)
+        expiration = response['Credentials']['Expiration'].isoformat()
+        response['Credentials']['Expiration'] = expiration
+        return response
 
     def _create_client(self):
         return self._client_creator(
@@ -364,8 +364,7 @@ class SAMLCredentialFetcher(CachedCredentialFetcher):
                 self._config.get('role_arn'), role_arns
             ))
 
-        self._role_arn = role_arn
-        return self._role_arn
+        return role_arn
 
     def _get_assume_role_kwargs(self):
         if self._assume_role_kwargs is not None:

@@ -60,7 +60,6 @@ def test_unsupported_saml_auth_type(client_creator, prompter):
         saml_config=invalid_config,
         provider_name='okta',
         password_prompter=prompter,
-        cache={}
     )
     with pytest.raises(ValueError):
         fetcher.fetch_credentials()
@@ -79,7 +78,6 @@ def test_unsupported_saml_provider(client_creator, prompter):
             saml_config=invalid_config,
             provider_name='unsupported',
             password_prompter=prompter,
-            cache={}
         )
 
 
@@ -110,7 +108,6 @@ def test_prompter_only_called_once(client_creator, prompter, assertion,
         saml_config=config,
         provider_name='okta',
         password_prompter=prompter,
-        cache={}
     )
     for _ in range(5):
         fetcher.fetch_credentials()

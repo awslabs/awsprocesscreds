@@ -1,8 +1,10 @@
 import base64
 import json
-import copy
+from datetime import datetime, timedelta
+from copy import deepcopy
 
 import mock
+from dateutil.tz import tzlocal
 import pytest
 import requests
 
@@ -13,7 +15,7 @@ from awsprocesscreds.saml import OktaAuthenticator
 from awsprocesscreds.saml import SAMLAuthenticator
 from awsprocesscreds.saml import SAMLError, FormParserError
 from awsprocesscreds.saml import SAMLCredentialFetcher
-from tests.conftest import create_assertion
+from tests import create_assertion
 
 
 @pytest.fixture
@@ -79,8 +81,15 @@ def basic_form():
         '</form>'
     )
 
+
 @pytest.fixture
-def fetcher(generic_config, client_creator, prompter, mock_authenticator):
+def cache():
+    return {}
+
+
+@pytest.fixture
+def fetcher(generic_config, client_creator, prompter, mock_authenticator,
+            cache):
     provider_name = 'myprovider'
     authenticator_cls = mock.Mock(return_value=mock_authenticator)
 
@@ -93,7 +102,8 @@ def fetcher(generic_config, client_creator, prompter, mock_authenticator):
         client_creator=client_creator,
         provider_name=provider_name,
         saml_config=generic_config,
-        password_prompter=prompter
+        password_prompter=prompter,
+        cache=cache
     )
     return saml_fetcher
 
@@ -563,3 +573,68 @@ class TestSAMLCredentialFetcher(object):
         assert creds['AccessKeyId'] == 'foo'
         assert creds['SecretAccessKey'] == 'bar'
         assert creds['SessionToken'] == 'baz'
+
+    def test_cache_key_is_windows_safe(self, fetcher, cache,
+                                       mock_authenticator):
+        provider_arn = 'arn:aws:iam::123456789012:saml-provider/Example'
+        role_arn = 'arn:aws:iam::123456789012:role/monty'
+        saml_assertion = create_assertion([
+            '%s, %s' % (provider_arn, role_arn)
+        ])
+        retrieve = mock_authenticator.retrieve_saml_assertion
+        retrieve.return_value = saml_assertion
+        fetcher.fetch_credentials()
+
+        cache_key = '0cebd512540a4f5fe2edce26319cf1cf3138684f'
+        assert cache_key in cache
+
+    def test_datetime_cache_is_always_serialized(self, fetcher, cache,
+                                                 mock_botocore_client,
+                                                 mock_authenticator):
+        expiration = datetime.now(tzlocal()) + timedelta(days=1)
+        mock_botocore_client.assume_role_with_saml.return_value = {
+            'Credentials': {
+                'AccessKeyId': 'foo',
+                'SecretAccessKey': 'bar',
+                'SessionToken': 'baz',
+                'Expiration': expiration
+            },
+        }
+
+        provider_arn = 'arn:aws:iam::123456789012:saml-provider/Example'
+        role_arn = 'arn:aws:iam::123456789012:role/monty'
+        saml_assertion = create_assertion([
+            '%s, %s' % (provider_arn, role_arn)
+        ])
+        retrieve = mock_authenticator.retrieve_saml_assertion
+        retrieve.return_value = saml_assertion
+        fetcher.fetch_credentials()
+
+        cache_key = '0cebd512540a4f5fe2edce26319cf1cf3138684f'
+        cache_expiration = cache[cache_key]['Credentials']['Expiration']
+        assert not isinstance(cache_expiration, datetime)
+        assert cache_expiration == expiration.isoformat()
+
+    def test_only_prompted_once(self, fetcher, mock_botocore_client,
+                                mock_authenticator, assertion, cache):
+        expiration = datetime.now(tzlocal()) + timedelta(days=1)
+        response = {
+            'Credentials': {
+                'AccessKeyId': 'foo',
+                'SecretAccessKey': 'bar',
+                'SessionToken': 'baz',
+                'Expiration': expiration
+            },
+        }
+
+        # The fetcher will mutate the response, so we have to pre-fill
+        # several responses so that we don't encounter one that's mutated.
+        mock_botocore_client.assume_role_with_saml.side_effect = [
+            deepcopy(response) for _ in range(5)
+        ]
+        mock_authenticator.retrieve_saml_assertion.return_value = assertion
+        for _ in range(5):
+            fetcher.fetch_credentials()
+            cache.clear()
+
+        assert mock_authenticator.retrieve_saml_assertion.call_count == 1

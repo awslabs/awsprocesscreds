@@ -5,9 +5,11 @@ import getpass
 import botocore.session
 
 from .saml import SAMLCredentialFetcher
+from .cache import JSONFileCache
 
 
-def saml(argv=None, prompter=getpass.getpass, client_creator=None):
+def saml(argv=None, prompter=getpass.getpass, client_creator=None,
+         cache_dir=None):
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-e', '--endpoint', required=True, help=(
@@ -45,7 +47,8 @@ def saml(argv=None, prompter=getpass.getpass, client_creator=None):
             'saml_username': args.username,
             'role_arn': args.role_arn
         },
-        password_prompter=prompter
+        password_prompter=prompter,
+        cache=JSONFileCache(cache_dir)
     )
     creds = fetcher.fetch_credentials()
     creds['Version'] = 1
