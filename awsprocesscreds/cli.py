@@ -38,6 +38,13 @@ def saml(argv=None, prompter=getpass.getpass, client_creator=None,
         )
     )
     parser.add_argument(
+        '--no-cache', action='store_false', default=True, dest='cache',
+        help=(
+            'Disables the storing and retrieving of credentials from the '
+            'local file cache.'
+        )
+    )
+    parser.add_argument(
         '-v', '--verbose', action='store_true', help=('Enables verbose mode')
     )
     args = parser.parse_args(argv)
@@ -54,6 +61,10 @@ def saml(argv=None, prompter=getpass.getpass, client_creator=None,
     if client_creator is None:
         client_creator = botocore.session.Session().create_client
 
+    cache = {}
+    if args.cache:
+        cache = JSONFileCache(cache_dir)
+
     fetcher = SAMLCredentialFetcher(
         client_creator=client_creator,
         provider_name=args.provider,
@@ -64,7 +75,7 @@ def saml(argv=None, prompter=getpass.getpass, client_creator=None,
             'role_arn': args.role_arn
         },
         password_prompter=prompter,
-        cache=JSONFileCache(cache_dir)
+        cache=cache
     )
     creds = fetcher.fetch_credentials()
     creds['Version'] = 1
