@@ -221,6 +221,10 @@ class OktaAuthenticator(GenericFormsBasedAuthenticator):
         auth_url = 'https://%s/api/v1/authn' % hostname
         username = config['saml_username']
         password = self._password_prompter("Password: ")
+        logger.info(
+            'Sending HTTP POST with username (%s) and password to Okta API '
+            'endpoint: %s', username, auth_url
+        )
         response = self._requests_session.post(
             auth_url,
             headers={'Content-Type': 'application/json',
@@ -232,7 +236,13 @@ class OktaAuthenticator(GenericFormsBasedAuthenticator):
         session_token = parsed['sessionToken']
         saml_url = endpoint + '?sessionToken=%s' % session_token
         response = self._requests_session.get(saml_url)
+        logger.info(
+            'Received HTTP response of status code: %s', response.status_code)
         r = self._extract_saml_assertion_from_response(response.text)
+        logger.info(
+            'Received the following SAML assertion: %s', r,
+            extra={'is_saml_assertion': True}
+        )
         return r
 
     def is_suitable(self, config):
@@ -342,9 +352,12 @@ class SAMLCredentialFetcher(CachedCredentialFetcher):
         }
 
     def _get_credentials(self):
-        logger.debug("Retrieving credentials via AssumeRoleWithSaml.")
         kwargs = self._get_assume_role_kwargs()
         client = self._create_client()
+        logger.info(
+            'Retrieving credentials with STS.AssumeRoleWithSaml() using the '
+            'following parameters: %s', kwargs
+        )
         response = client.assume_role_with_saml(**kwargs)
         expiration = response['Credentials']['Expiration'].isoformat()
         response['Credentials']['Expiration'] = expiration
