@@ -18,8 +18,14 @@ def argv():
     ]
 
 
+@pytest.fixture
+def cache_dir(tmpdir):
+    cache_directory = tmpdir.mkdir('awscreds-saml-cache')
+    return cache_directory
+
+
 def test_cli(mock_requests_session, argv, prompter, assertion, client_creator,
-             capsys):
+             capsys, cache_dir):
     session_token = {'sessionToken': 'spam'}
     token_response = mock.Mock(
         spec=requests.Response, status_code=200, text=json.dumps(session_token)
@@ -32,7 +38,8 @@ def test_cli(mock_requests_session, argv, prompter, assertion, client_creator,
 
     mock_requests_session.post.return_value = token_response
     mock_requests_session.get.return_value = assertion_response
-    saml(argv=argv, prompter=prompter, client_creator=client_creator)
+    saml(argv=argv, prompter=prompter, client_creator=client_creator,
+         cache_dir=cache_dir)
 
     stdout, _ = capsys.readouterr()
     assert stdout.endswith('\n')
