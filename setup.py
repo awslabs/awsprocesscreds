@@ -6,8 +6,9 @@ with open('README.rst') as readme_file:
 
 
 install_requires = [
-    'botocore>=1.7.0,<2.0.0',
+    'botocore>=1.8.1,<2.0.0',
     'six>=1.8.0,<2.0.0',
+    'requests>=2.7.0,<3.0.0'
 ]
 
 setup(
@@ -20,6 +21,11 @@ setup(
     install_requires=install_requires,
     license='Apache License 2.0',
     keywords='aws credentials',
+    entry_points={
+        'console_scripts': [
+            'awsprocesscreds-saml = awsprocesscreds.cli:saml'
+        ]
+    },
     classifiers=(
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
