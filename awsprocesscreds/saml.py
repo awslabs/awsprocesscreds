@@ -4,6 +4,7 @@ import logging
 import xml.etree.cElementTree as ET
 from html import escape
 from hashlib import sha1
+from copy import deepcopy
 
 import six
 import requests
@@ -358,7 +359,7 @@ class SAMLCredentialFetcher(CachedCredentialFetcher):
             'Retrieving credentials with STS.AssumeRoleWithSaml() using the '
             'following parameters: %s', kwargs
         )
-        response = client.assume_role_with_saml(**kwargs)
+        response = deepcopy(client.assume_role_with_saml(**kwargs))
         expiration = response['Credentials']['Expiration'].isoformat()
         response['Credentials']['Expiration'] = expiration
         return response

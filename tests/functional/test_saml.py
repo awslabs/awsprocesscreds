@@ -55,6 +55,43 @@ def test_cli(mock_requests_session, argv, prompter, assertion, client_creator,
     assert response == expected_response
 
 
+def test_no_cache(mock_requests_session, argv, prompter, assertion,
+                  client_creator, capsys, cache_dir):
+    session_token = {'sessionToken': 'spam'}
+    token_response = mock.Mock(
+        spec=requests.Response, status_code=200, text=json.dumps(session_token)
+    )
+    assertion_form = '<form><input name="SAMLResponse" value="%s"/></form>'
+    assertion_form = assertion_form % assertion.decode('ascii')
+    assertion_response = mock.Mock(
+        spec=requests.Response, status_code=200, text=assertion_form
+    )
+
+    mock_requests_session.post.return_value = token_response
+    mock_requests_session.get.return_value = assertion_response
+
+    argv.append('--no-cache')
+
+    expected_response = {
+        "AccessKeyId": "foo",
+        "SecretAccessKey": "bar",
+        "SessionToken": "baz",
+        "Expiration": mock.ANY,
+        "Version": 1
+    }
+
+    call_count = 5
+    for _ in range(call_count):
+        saml(argv=argv, prompter=prompter, client_creator=client_creator,
+             cache_dir=cache_dir)
+        stdout, _ = capsys.readouterr()
+        assert json.loads(stdout) == expected_response
+
+    assert mock_requests_session.post.call_count == call_count
+    assert mock_requests_session.get.call_count == call_count
+    assert prompter.call_count == call_count
+
+
 def test_unsupported_saml_auth_type(client_creator, prompter):
     invalid_config = {
         'saml_authentication_type': 'unsupported',
