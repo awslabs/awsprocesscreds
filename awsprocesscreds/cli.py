@@ -45,7 +45,7 @@ def saml(argv=None, prompter=getpass.getpass, client_creator=None,
         )
     )
     parser.add_argument(
-        '-v', '--verbose', action='store_true', help=('Enables verbose mode')
+        '-v', '--verbose', action='store_true', help=('Enables verbose mode.')
     )
     args = parser.parse_args(argv)
 
@@ -91,7 +91,8 @@ class PrettyPrinterLogHandler(logging.StreamHandler):
         if isinstance(record.args, dict):
             record.args = self._pformat_dict(record.args)
         elif getattr(record, 'is_saml_assertion', False):
-            record.args = self._pformat_saml_assertion(record.args[0])
+            formatted = self._pformat_saml_assertion(record.args[0])
+            record.args = tuple([formatted])
 
     def _pformat_dict(self, args):
         return json.dumps(args, indent=4, sort_keys=True)

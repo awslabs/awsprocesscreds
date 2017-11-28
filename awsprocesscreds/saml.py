@@ -241,7 +241,7 @@ class OktaAuthenticator(GenericFormsBasedAuthenticator):
             'Received HTTP response of status code: %s', response.status_code)
         r = self._extract_saml_assertion_from_response(response.text)
         logger.info(
-            'Received the following SAML assertion: %s', r,
+            'Received the following SAML assertion: \n%s', r,
             extra={'is_saml_assertion': True}
         )
         return r

@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
-
+import copy
+import logging
 import mock
+
 import pytest
 from dateutil.tz import tzlocal
 
@@ -58,3 +60,25 @@ def assertion(request):
     else:
         config_string = '%s,%s' % (role_arn, provider_arn)
     return create_assertion([config_string])
+
+
+@pytest.fixture(autouse=True)
+def reset_logger():
+    """Makes sure that mutations to the logger don't persist between tests."""
+    logger = logging.getLogger('awsprocesscreds')
+    original_level = logger.level
+    original_handlers = copy.copy(logger.handlers)
+    original_filters = copy.copy(logger.filters)
+
+    # Everything after the yield will be called during test cleanup.
+    yield
+
+    logger.setLevel(original_level)
+
+    for handler in logger.handlers:
+        if handler not in original_handlers:
+            logger.removeHandler(handler)
+
+    for log_filter in logger.filters:
+        if log_filter not in original_filters:
+            logger.removeFilter(log_filter)
