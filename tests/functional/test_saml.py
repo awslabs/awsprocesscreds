@@ -22,12 +22,6 @@ def argv():
     ]
 
 
-@pytest.fixture
-def cache_dir(tmpdir):
-    cache_directory = tmpdir.mkdir('awscreds-saml-cache')
-    return cache_directory
-
-
 def test_cli(mock_requests_session, argv, prompter, assertion, client_creator,
              capsys, cache_dir):
     session_token = {'sessionToken': 'spam'}

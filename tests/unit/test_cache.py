@@ -7,11 +7,6 @@ from awsprocesscreds.cache import JSONFileCache
 
 
 @pytest.fixture
-def cache_dir(tmpdir):
-    return tmpdir.mkdir('json-file-cache')
-
-
-@pytest.fixture
 def file_cache(cache_dir):
     return JSONFileCache(cache_dir)
 
@@ -51,7 +46,7 @@ def test_can_add_multiple_keys(file_cache):
 
 
 def test_working_dir_does_not_exist(cache_dir):
-    working_dir = cache_dir.join('does-not-exist-yet')
+    working_dir = os.path.join(cache_dir, 'does-not-exist-yet')
     cache = JSONFileCache(working_dir)
     cache['spam'] = {'bacon': 'eggs'}
     assert cache['spam'] == {'bacon': 'eggs'}
@@ -77,5 +72,5 @@ def test_file_is_truncated_before_writing(file_cache):
 )
 def test_permissions_for_file_restricted(file_cache, cache_dir):
     file_cache['mykey'] = {'spam': 'eggs'}
-    filename = cache_dir.join('mykey.json')
+    filename = os.path.join(cache_dir, 'mykey.json')
     assert os.stat(filename).st_mode & 0xFFF, 0o600
