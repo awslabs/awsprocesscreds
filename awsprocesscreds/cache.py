@@ -7,7 +7,7 @@ class JSONFileCache(object):
         '~', '.aws', 'cli', 'process-creds-cache'
     ))
 
-    def __init__(self, working_dir=CACHE_DIR):
+    def __init__(self, working_dir=None):
         """JSON file cache.
 
         This provides a dict like interface that stores JSON serializable
@@ -16,6 +16,8 @@ class JSONFileCache(object):
         The objects are serialized to JSON and stored in a file.  These
         values can be retrieved at a later time.
         """
+        if working_dir is None:
+            working_dir = self.CACHE_DIR
         self._working_dir = working_dir
 
     def __contains__(self, cache_key):
