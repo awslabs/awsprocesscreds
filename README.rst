@@ -2,8 +2,31 @@
 AWS Process Credential Providers
 ================================
 
+.. image:: https://travis-ci.org/awslabs/awsprocesscreds.svg?branch=master
+   :target: https://travis-ci.org/awslabs/awsprocesscreds
+
 A collection of process-based credential providers to be used with the AWS CLI
 and related tools.
+
+
+Installation
+------------
+
+The easiest way to install is to use pip::
+
+    pip install awsprocesscreds
+
+Requirements
+~~~~~~~~~~~~
+
+This package requires a version of python to be installed. Currently supported
+python versions are:
+
+* 2.7.9+
+* 3.3.x
+* 3.4.x
+* 3.5.x
+* 3.6.x
 
 
 SAML Forms-Based Authentication

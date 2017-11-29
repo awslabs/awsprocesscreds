@@ -17,6 +17,7 @@ setup(
     description='AWS Process Credential Providers.',
     long_description=README,
     author='Amazon Web Services',
+    url='https://github.com/awslabs/awsprocesscreds',
     packages=find_packages(exclude=['tests']),
     install_requires=install_requires,
     license='Apache License 2.0',
