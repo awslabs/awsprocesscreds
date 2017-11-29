@@ -283,8 +283,11 @@ class FormParser(six.moves.html_parser.HTMLParser):
         # When input contains things like "&amp;", HTMLParser will unescape it.
         # But we need to use escape() here to nullify the default behavior,
         # so that the output will be suitable to be fed into an ET later.
-        return ' '.join(sorted(
-            '%s="%s"' % (k, escape(v)) for k, v in d.items()))
+        parts = []
+        for k, v in d.items():
+            escaped_value = escape(v)  # pylint: disable=deprecated-method
+            parts.append('%s="%s"' % (k, escaped_value))
+        return ' '.join(sorted(parts))
 
     def extract_form(self, index):
         form = dict(self.forms[index])  # Will raise exception if out of bound

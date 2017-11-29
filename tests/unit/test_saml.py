@@ -395,7 +395,7 @@ class TestOktaAuthenticator(object):
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         }
-        assert call_args[0][0] == 'https://example.com/api/v1/authn'
+        assert url == 'https://example.com/api/v1/authn'
         assert payload == {'username': 'monty', 'password': 'mypassword'}
         assert headers == expected_headers
 
