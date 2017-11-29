@@ -82,3 +82,9 @@ def reset_logger():
     for log_filter in logger.filters:
         if log_filter not in original_filters:
             logger.removeFilter(log_filter)
+
+
+@pytest.fixture
+def cache_dir(tmpdir):
+    cache_directory = tmpdir.mkdir('awscreds-saml-cache')
+    return '%s' % cache_directory

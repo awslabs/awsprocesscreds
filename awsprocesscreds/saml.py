@@ -2,7 +2,6 @@ import base64
 import getpass
 import logging
 import xml.etree.cElementTree as ET
-from html import escape
 from hashlib import sha1
 from copy import deepcopy
 
@@ -15,6 +14,8 @@ from botocore.compat import urljoin
 from botocore.compat import json
 from botocore.credentials import CachedCredentialFetcher
 import botocore.session
+
+from .compat import escape
 
 
 class SAMLError(Exception):

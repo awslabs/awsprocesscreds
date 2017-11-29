@@ -4,7 +4,7 @@ MODULE=awsprocesscreds/
 check:
 	###### FLAKE8 #####
 	# No unused imports, no undefined vars
-	flake8 --ignore=E731,W503 --max-complexity 10 $(MODULE)
+	flake8 --ignore=E731,W503 --exclude compat.py --max-complexity 10 $(MODULE)
 	flake8 tests/unit/ tests/functional/ tests/integration/
 	# Proper docstring conventions according to pep257
 	pydocstyle --add-ignore=D100,D101,D102,D103,D104,D105,D204,D301 $(MODULE)
