@@ -386,13 +386,18 @@ class TestOktaAuthenticator(object):
         assert saml_assertion == 'fakeassertion'
 
         # Verify we made the correct auth request.
-        mock_requests_session.post.assert_called_with(
-            # We should inject the /api/v1/authn to the endpoint.
-            'https://example.com/api/v1/authn',
-            data='{"username": "monty", "password": "mypassword"}',
-            headers={'Content-Type': 'application/json',
-                     'Accept': 'application/json'}
-        )
+        call_args = mock_requests_session.post.call_args
+        url = call_args[0][0]
+        payload = json.loads(call_args[1]['data'])
+        headers = call_args[1]['headers']
+
+        expected_headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+        assert call_args[0][0] == 'https://example.com/api/v1/authn'
+        assert payload == {'username': 'monty', 'password': 'mypassword'}
+        assert headers == expected_headers
 
         # And the GET for the SAML assertion should inject the session token.
         mock_requests_session.get.assert_called_with(
