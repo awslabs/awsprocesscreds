@@ -13,7 +13,7 @@ install_requires = [
 
 setup(
     name='awsprocesscreds',
-    version='0.0.1',
+    version='0.0.2',
     description='AWS Process Credential Providers.',
     long_description=README,
     author='Amazon Web Services',
