@@ -8,6 +8,9 @@ AWS Process Credential Providers
 A collection of process-based credential providers to be used with the AWS CLI
 and related tools.
 
+This is an experimental package, breaking changes may occur on any minor
+version bump.
+
 
 Installation
 ------------
@@ -68,3 +71,33 @@ Example adfs configuration::
     credential_process = awsprocesscreds-saml -e 'https://corp.example.com/adfs/ls/IdpInitiatedSignOn.aspx?loginToRp=urn:amazon:webservices' -u Monty -p adfs -a arn:aws:iam::123456789012:role/ADFS-Dev
 
 .. _AWS CLI Config docs: http://docs.aws.amazon.com/cli/latest/topic/config-vars.html#cli-aws-help-config-vars
+
+
+Custom Providers
+----------------
+
+The mechanism this package uses to provide credentials is generally available,
+and not specific to this package. It can be used to implement any custom
+credential provider that will work with the AWS CLI, boto3, and other SDKs as
+they implement support.
+
+A detailed breakdown of this mechanism along with a live demo of implementing a
+credential provider that hooks into the macOS keychain can be seen on this
+recorded talk from re:Invent 2017:
+`AWS CLI: 2107 and Beyond <https://youtu.be/W8IyScUGuGI?t=1260>`_
+
+The CLI will call the process provided as the value for ``credential_process``.
+This process must return credentials on stdout in the following JSON form::
+
+   {
+      "Version": 1,
+      "AccessKeyId": "string",
+      "SecretAccessKey": "string",
+      "SessionToken": "string",
+      "Expiration": "2019-01-31T21:45:41+00:00"
+   }
+
+Where ``Expiration`` is an RFC 3339 compatible timestamp. As the expiration
+time nears, the process will be called again to get a new set of credentials.
+The ``Version`` denotes the version of this format, whose only current valid
+value is ``1``. The remaining keys are the AWS credentials you wish to use.
