@@ -1,3 +1,4 @@
+# pylint: disable=R1710
 import base64
 import getpass
 import logging
