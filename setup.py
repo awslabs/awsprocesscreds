@@ -1,8 +1,24 @@
 #!/usr/bin/env python
+import codecs
+import os.path
+import re
 from setuptools import setup, find_packages
 
-with open('README.rst') as readme_file:
-    README = readme_file.read()
+HERE = os.path.abspath(os.path.dirname(__file__))
+
+
+def read(*parts):
+    return codecs.open(os.path.join(HERE, *parts), 'r').read()
+
+
+def find_version(*file_paths):
+    version_file = read(*file_paths)
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                              version_file, re.M)
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError("Unable to find version string.")
+
 
 
 install_requires = [
@@ -13,9 +29,9 @@ install_requires = [
 
 setup(
     name='awsprocesscreds',
-    version='0.0.1',
+    version=find_version('awsprocesscreds', '__init__.py'),
     description='AWS Process Credential Providers.',
-    long_description=README,
+    long_description=read('README.rst'),
     author='Amazon Web Services',
     url='https://github.com/awslabs/awsprocesscreds',
     packages=find_packages(exclude=['tests']),

@@ -1,3 +1,4 @@
+# pylint: disable=R1710
 import base64
 import getpass
 import logging
@@ -15,6 +16,7 @@ from botocore.compat import json
 from botocore.credentials import CachedCredentialFetcher
 import botocore.session
 
+import awsprocesscreds
 from .compat import escape
 
 
@@ -370,7 +372,12 @@ class SAMLCredentialFetcher(CachedCredentialFetcher):
 
     def _create_client(self):
         return self._client_creator(
-            'sts', config=Config(signature_version=botocore.UNSIGNED)
+            'sts', config=Config(
+                signature_version=botocore.UNSIGNED,
+                user_agent_extra=(
+                    'awsprocesscreds-saml/%s' % awsprocesscreds.__version__
+                )
+            )
         )
 
     def _get_role_and_principal_arn(self, assertion):
